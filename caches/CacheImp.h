@@ -36,10 +36,10 @@ private:
     struct CacheEntry {
         Key key;
         Value value;
-        bool reference_bit; // бит обращения
+        int reference_bit; // бит обращения
         bool occupied; // занятость ячейки
         
-        CacheEntry() : reference_bit(false), occupied(false) {}
+        CacheEntry() : reference_bit(0), occupied(false) {}
     };
     
     std::vector<CacheEntry> buffer; // циклический буфер
@@ -64,7 +64,7 @@ public:
         if (it != key_to_index.end()) {
             size_t idx = it->second;
             buffer[idx].value = value;
-            buffer[idx].reference_bit = true;
+            buffer[idx].reference_bit++;
             return;
         }
         
@@ -77,7 +77,7 @@ public:
         
         buffer[idx].key = key;
         buffer[idx].value = value;
-        buffer[idx].reference_bit = true;
+        buffer[idx].reference_bit = 1;
         buffer[idx].occupied = true;
         
         key_to_index[key] = idx;
@@ -91,7 +91,7 @@ public:
         }
         
         size_t idx = it->second;
-        buffer[idx].reference_bit = true;
+        buffer[idx].reference_bit++;
         return buffer[idx].value;
     }
     
@@ -102,7 +102,7 @@ public:
     void clear() override {
         for (auto& entry : buffer) {
             entry.occupied = false;
-            entry.reference_bit = false;
+            entry.reference_bit = 0;
         }
         key_to_index.clear();
         current_size = 0;
@@ -126,7 +126,7 @@ private:
             if (entry.occupied) {
                 if (entry.reference_bit) {
                     // сбрасывание бита
-                    entry.reference_bit = false;
+                    entry.reference_bit--;
                 } else {
                     // Вытеснение
                     key_to_index.erase(entry.key);
